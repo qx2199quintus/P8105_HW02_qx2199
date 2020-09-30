@@ -83,8 +83,50 @@ This dataset contains information from the Mr. Trashwheel trash collector in Bal
 
 There are a total of `r nrow(trashwheel_df)` rows in our final dataset.There are a total of `r nrow(precipitation_bind_df)` rows in the combined precipitation dataset of 2017 and 2018.
 
-* The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
-* The total precipitation in 2018 was `r precipitation_bind_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+The median number of sports balls found in a dumpster in 2017 was `r trashwheel_df %>% filter(year == 2017) %>% pull(sports_balls) %>% median()`
+The total precipitation in 2018 was `r precipitation_bind_df %>% filter(year == 2018) %>% pull(total) %>% sum()` inches.
+
+#Problem 2
+
+##First, define a path to the NYC Transit dataset. 
+
+```{r}
+path_subway = "./NYC_Transit_Subway_Entrance_And_Exit_Data.csv"
+```
+,
+##Read and clean NYC subway data.
+
+```{r read the nyc_subway_dataset, message=FALSE}
+nyc_subway_df = 
+      read_csv(
+             file = path_subway, 
+             ) %>% 
+      janitor::clean_names() %>% 
+      select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) %>% 
+      mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE),
+             vending = recode(vending, "YES" = TRUE, "NO" = FALSE)
+             
+             )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
