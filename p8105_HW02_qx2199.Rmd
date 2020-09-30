@@ -151,6 +151,7 @@ pols_month_df =
   separate(mon, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>% 
   mutate(month = month.name[month]) %>% 
   mutate(president = ifelse(prez_gop == 1, "gop", "dem")) %>% 
+  mutate_at(vars(year),as.character) %>% 
   select(-c(prez_gop, prez_dem))
 ```
 ###Define a path to the snp dataset.
@@ -166,7 +167,8 @@ snp_df =
   janitor::clean_names() %>% 
   separate(date, into = c("month", "day", "year"), sep = "/", convert = TRUE) %>% 
   mutate(month = month.name[month]) %>% 
-  relocate(year, month)
+   mutate_at(vars(year),as.character) %>% 
+relocate(year, month)
 ```
 ###Define a path to the unemployment dataset.
 
@@ -189,15 +191,14 @@ unemployment_df =
                 mutate_at(vars(year),as.character)
 
 ```
-
-
-#### Join the pols-month, snp, and unemployment datasets.
+### Join the pols-month,snp and unemployment datasets.
 
 ```{r join_transit_snp_unemployment}
 combine_pols_snp_df =
-  left_join(pols_month_tidy_df, snp_tidy_df, by = c("month_name", "year"))
-pols_snp_unemployment_df =
-  left_join(pols_snp_df, unemployment_tidy_df, by = c("month_name", "year"))
+  left_join(pols_month_df, snp_df, by = c("month", "year"))
+
+combine_all_df =
+  left_join(combine_pols_snp_df, unemployment_df, by = c("month", "year"))
 ```
 
 
