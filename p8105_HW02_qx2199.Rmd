@@ -182,40 +182,25 @@ unemployment_df =
     pivot_longer(
                c( jan:dec ),
                 names_to = "month",
+                names_prefix = NULL,
                 values_to = "unemployment"
                 ) %>% 
-                mutate(month = recode(month, "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "may" = "May", "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October", "nov" = "November", "dec" = "December"))
-
-```
-
-month_df_1 = 
-  tibble(
-    month_number = 1:12,
-    month = month.name
-  )
-
-
-unemployment_df =
-              left_join(unemployment_df, month_df_1, by = "month") %>% 
-              mutate(data = year * 100 + month_number) %>% 
-              select(-month_number) %>% 
-              relocate(data)
+                mutate(month = recode(month, "jan" = "January", "feb" =                                                    "February", "mar" = "March",                                                 "apr" = "April", "may" = "May",                                               "jun" = "June", "jul" = "July",                                               "aug" = "August", "sep" =                                                    "September", "oct" = "October",                                                "nov" = "November", "dec" =                                                    "December")) %>% 
+                mutate_at(vars(year),as.character)
 
 ```
 
 
-Finally, we combine them together and get the result (use `data` as key variable):
+#### Join the pols-month, snp, and unemployment datasets.
 
-
-```{r final}
-result_df = 
-        left_join(pols_month_df, snp_df, by = "data") %>% 
-        left_join(., unemployment_df, by = "data") %>% 
-        select(-year.y, -month.y, -year, -month) %>% 
-        rename(year = year.x, month = month.x) %>% 
-        arrange(data) %>% 
-        select(-data)
+```{r join_transit_snp_unemployment}
+combine_pols_snp_df =
+  left_join(pols_month_tidy_df, snp_tidy_df, by = c("month_name", "year"))
+pols_snp_unemployment_df =
+  left_join(pols_snp_df, unemployment_tidy_df, by = c("month_name", "year"))
 ```
+
+
 
 
 
