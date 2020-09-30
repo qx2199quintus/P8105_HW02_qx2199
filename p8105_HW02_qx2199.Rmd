@@ -7,7 +7,6 @@ output: github_document
 ```{r setup}
 library(tidyverse)
 library(readxl)
-library(knitr)
 ```
 
 #Problem 1
@@ -96,13 +95,13 @@ path_subway = "./NYC_Transit_Subway_Entrance_And_Exit_Data.csv"
 ```
 ,
 ##Read and clean NYC subway data.
-###Here we first read the dataset, then we need to mak sure that the types of each variable should be the type we want. We first notice that the variable entry and variable vending is stored as character variables,however, we need to switch them into logic variables.
-###Also, we could notice that some of the route variables (route8,route9,route10,route10,route11) are double, we need to switch the type of the route variable into character.
+###Here we firstly read the dataset, then we need to make sure that the types of each variablebe the type that we want. We first notice that the variable entry and variable vending is stored as character variables, and we need to switch them into logic variables.Also, we could notice that some of the route variables (route8,route9,route10,route10,route11) are double, we need to switch the type of the route variable into character variable.
 
 ```{r read the nyc_subway_dataset, message=FALSE}
 nyc_subway_df = 
       read_csv(
-             file = path_subway,col_types = cols( Route8 = col_character(), Route9 = col_character() , Route10 = col_character() , Route11 = col_character() )
+             file = path_subway,
+             col_types = cols( Route8 = col_character(), Route9 = col_character() , Route10 = col_character() , Route11 = col_character() )
              ) %>% 
       janitor::clean_names() %>% 
       select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) %>% 
@@ -134,9 +133,89 @@ nyc_subway_new =
 ###There are `r nyc_subway_new %>% filter(route_name == "A") %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations serve the A train.Among the stations that serve the A train, `r nyc_subway_new %>% filter(route_name == "A" & ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.
 
 
+##Problem 3
+
+##First, define a path to the pols_month dataset. 
+###Clean the data in pols-month.csv. Break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
+
+###Define a path to the pols-month dataset.
+```{r}
+path_pols_month = "./data/pols-month.csv"
+```
+
+###Read and clean the pols-month dataset
+```{r}
+pols_month_df = 
+  read_csv(path_pols_month) %>% 
+  janitor::clean_names() %>% 
+  separate(mon, into = c("year", "month", "day"), sep = "-", convert = TRUE) %>% 
+  mutate(month = month.name[month]) %>% 
+  mutate(president = ifelse(prez_gop == 1, "gop", "dem")) %>% 
+  select(-c(prez_gop, prez_dem))
+```
+###Define a path to the snp dataset.
+
+```{r}
+path_snp = "./data/snp.csv"
+```
+
+###Read and clean the snp dataset
+```{r}
+snp_df = 
+  read_csv(path_snp) %>% 
+  janitor::clean_names() %>% 
+  separate(date, into = c("month", "day", "year"), sep = "/", convert = TRUE) %>% 
+  mutate(month = month.name[month]) %>% 
+  relocate(year, month)
+```
+###Define a path to the unemployment dataset.
 
 
+```{r}
+path_unemployment = "./data/unemployment.csv"
+```
+###Read and clean the data in unemployment.csv
+```{r}
+unemployment_df = 
+  read_csv(path_unemployment) %>% 
+  janitor::clean_names() %>% 
+    pivot_longer(
+               c( jan:dec ),
+                names_to = "month",
+                values_to = "unemployment"
+                ) %>% 
+                mutate(month = recode(month, "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "may" = "May", "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October", "nov" = "November", "dec" = "December"))
 
+```
+
+month_df_1 = 
+  tibble(
+    month_number = 1:12,
+    month = month.name
+  )
+
+
+unemployment_df =
+              left_join(unemployment_df, month_df_1, by = "month") %>% 
+              mutate(data = year * 100 + month_number) %>% 
+              select(-month_number) %>% 
+              relocate(data)
+
+```
+
+
+Finally, we combine them together and get the result (use `data` as key variable):
+
+
+```{r final}
+result_df = 
+        left_join(pols_month_df, snp_df, by = "data") %>% 
+        left_join(., unemployment_df, by = "data") %>% 
+        select(-year.y, -month.y, -year, -month) %>% 
+        rename(year = year.x, month = month.x) %>% 
+        arrange(data) %>% 
+        select(-data)
+```
 
 
 
