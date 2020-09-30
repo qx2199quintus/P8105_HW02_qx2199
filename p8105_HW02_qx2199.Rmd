@@ -96,34 +96,42 @@ path_subway = "./NYC_Transit_Subway_Entrance_And_Exit_Data.csv"
 ```
 ,
 ##Read and clean NYC subway data.
+###Here we first read the dataset, then we need to mak sure that the types of each variable should be the type we want. We first notice that the variable entry and variable vending is stored as character variables,however, we need to switch them into logic variables.
+###Also, we could notice that some of the route variables (route8,route9,route10,route10,route11) are double, we need to switch the type of the route variable into character.
 
 ```{r read the nyc_subway_dataset, message=FALSE}
 nyc_subway_df = 
       read_csv(
-             file = path_subway
+             file = path_subway,col_types = cols( Route8 = col_character(), Route9 = col_character() , Route10 = col_character() , Route11 = col_character() )
              ) %>% 
       janitor::clean_names() %>% 
-      select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada)
-     
-            
-
-```
-###Here we first read the dataset, then we need to mak sure that the types of each variable should be the type we want. We first notice that the variable entry and variable vending is stored asHere we could notice that some of the route variables (route8,route9,route10,route10,route11) are double, we need to switch the type of the route variable into character.
-
-
-
-
-
-
-, col_types = cols( Route1 = col_character() , Route2 = col_character(),Route3 = col_character(),Route4 = col_character(),Route5 = col_character(),Route6 = col_character(),Route7 = col_character(),Route8 = col_character(),Route9 = col_character(),Route10 = col_character(), Route11 = col_character() )
-
-
-
- mutate(entry = recode(entry, "YES" = TRUE , "NO" = FALSE), 
-             vending = recode(vending, "YES" = TRUE , "NO" = FALSE),
+      select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) %>% 
+   
+   mutate( entry = ifelse(entry == "YES", TRUE , FALSE) , 
+            vending = ifelse(entry == "YES", TRUE , FALSE),
       )
+     
+```
 
 
+This dataset contains information related to each entrance and exit for each subway station in NYC. The dataset contains information on variables such as
+`r names(nyc_subway_df)`. There are `r nrow(nyc_subway_df)` rows and `r ncol(nyc_subway_df)` columns. There are `r nyc_subway_df %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations.
+There are `r nyc_subway_df %>% filter(ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.Besides, the proportion of station entrances without vending allow entrance is `r nrow(filter(nyc_subway_df, entry == F & vending == F))/nrow(filter(nyc_subway_df, vending == F))`
+
+##Reform the data so that route number and route name are distinct variables
+
+```{r}
+nyc_subway_new =
+  pivot_longer(
+    nyc_subway_df,
+    route1:route11,
+    names_to = "route_number",
+    names_prefix = "route",
+    values_to = "route_name",
+    )
+```
+
+###There are `r nyc_subway_new %>% filter(route_name == "A") %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations serve the A train.Among the stations that serve the A train, `r nyc_subway_new %>% filter(route_name == "A" & ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.
 
 
 
