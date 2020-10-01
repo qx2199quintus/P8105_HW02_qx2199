@@ -97,7 +97,7 @@ path_subway = "./NYC_Transit_Subway_Entrance_And_Exit_Data.csv"
 ##Read and clean NYC subway data.
 ###Here we firstly read the dataset, then we need to make sure that the types of each variablebe the type that we want. We first notice that the variable entry and variable vending is stored as character variables, and we need to switch them into logic variables.Also, we could notice that some of the route variables (route8,route9,route10,route10,route11) are double, we need to switch the type of the route variable into character variable.
 
-```{r read the nyc_subway_dataset, message=FALSE}
+```{r read the nyc_subway_dataset}
 nyc_subway_df = 
       read_csv(
              file = path_subway,
@@ -106,20 +106,22 @@ nyc_subway_df =
       janitor::clean_names() %>% 
       select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) %>% 
    
-   mutate( entry = ifelse(entry == "YES", TRUE , FALSE) , 
-            vending = ifelse(entry == "YES", TRUE , FALSE),
-      )
+   mutate( entry = ifelse(entry == "YES", TRUE , FALSE) ,  
+          vending = ifelse(entry == "YES", TRUE , FALSE) )
      
 ```
 
 
-This dataset contains information related to each entrance and exit for each subway station in NYC. The dataset contains information on variables such as
+This dataset contains information related to each entrance and exit for each subway station in NYC. The dataset contains information on `r ncol(nyc_subway_df)` variables, such as
 `r names(nyc_subway_df)`. There are `r nrow(nyc_subway_df)` rows and `r ncol(nyc_subway_df)` columns. There are `r nyc_subway_df %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations.
-There are `r nyc_subway_df %>% filter(ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.Besides, the proportion of station entrances without vending allow entrance is `r nrow(filter(nyc_subway_df, entry == F & vending == F))/nrow(filter(nyc_subway_df, vending == F))`
+There are `r nyc_subway_df %>% filter(ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.
+The proportion of station entrances without vending allow entrance is 
+`r filter(nyc_subway_df, entry == T & vending == F) %>% nrow() / filter(nyc_subway_df, vending == F) %>% nrow()`.
+
 
 ##Reform the data so that route number and route name are distinct variables
 
-```{r}
+```{r reform the subway dataset}
 nyc_subway_new =
   pivot_longer(
     nyc_subway_df,
@@ -135,15 +137,15 @@ nyc_subway_new =
 
 ##Problem 3
 
-##First, define a path to the pols_month dataset. 
-###Clean the data in pols-month.csv. Break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
+##First, define a path to the "pols_month" dataset. 
 
 ###Define a path to the pols-month dataset.
-```{r}
+```{r define path to pols-month}
 path_pols_month = "./data/pols-month.csv"
 ```
 
-###Read and clean the pols-month dataset
+###Read and clean the pols-month dataset, break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
+
 ```{r}
 pols_month_df = 
   read_csv(path_pols_month) %>% 
@@ -152,9 +154,11 @@ pols_month_df =
   mutate(month = month.name[month]) %>% 
   mutate(president = ifelse(prez_gop == 1, "gop", "dem")) %>% 
   mutate_at(vars(year),as.character) %>% 
-  select(-c(prez_gop, prez_dem))
+  select(-c(prez_gop, prez_dem, day))
 ```
-###Define a path to the snp dataset.
+
+
+###Second, define a path to the snp dataset.
 
 ```{r}
 path_snp = "./data/snp.csv"
@@ -167,16 +171,18 @@ snp_df =
   janitor::clean_names() %>% 
   separate(date, into = c("month", "day", "year"), sep = "/", convert = TRUE) %>% 
   mutate(month = month.name[month]) %>% 
-   mutate_at(vars(year),as.character) %>% 
-relocate(year, month)
+   mutate_at(vars(year),as.character)  %>% 
+   relocate(year,month) %>% 
+select(-day)
 ```
-###Define a path to the unemployment dataset.
+
+###Third, define a path to the unemployment dataset.
 
 
 ```{r}
 path_unemployment = "./data/unemployment.csv"
 ```
-###Read and clean the data in unemployment.csv
+####Read and clean the unemployment dataset
 ```{r}
 unemployment_df = 
   read_csv(path_unemployment) %>% 
@@ -185,23 +191,32 @@ unemployment_df =
                c( jan:dec ),
                 names_to = "month",
                 names_prefix = NULL,
-                values_to = "unemployment"
+                values_to = "unemployment_percentage"
                 ) %>% 
                 mutate(month = recode(month, "jan" = "January", "feb" =                                                    "February", "mar" = "March",                                                 "apr" = "April", "may" = "May",                                               "jun" = "June", "jul" = "July",                                               "aug" = "August", "sep" =                                                    "September", "oct" = "October",                                                "nov" = "November", "dec" =                                                    "December")) %>% 
                 mutate_at(vars(year),as.character)
-
+            
 ```
 ### Join the pols-month,snp and unemployment datasets.
 
-```{r join_transit_snp_unemployment}
+```{r}
+#merging snp into pols
 combine_pols_snp_df =
   left_join(pols_month_df, snp_df, by = c("month", "year"))
-
+#merging
 combine_all_df =
   left_join(combine_pols_snp_df, unemployment_df, by = c("month", "year"))
 ```
+###Summary
 
+The pols-month dataset contains information on national politicians who are democratic or republican at any given time.There are  `r ncol(pols_month_df)` variables, such as`r names(pols_month_df)`. There are `r nrow(pols_month_df)` rows and `r ncol(nyc_subway_df)` columns.The range of years is (`r range(pull(pols_month_df, year))`)
 
+The snp dataset contains information to Standard & Poor’s stock market index (S&P), often used as a representative measure of stock market as a whole.
+There are  `r ncol(snp_df)` variables, such as`r names(snp_df)`. There are `r nrow(snp_df)` rows and `r ncol(snp_df)` columns.The range of years is (`r range(pull(snp_df, year))`)
+
+The unemployment dataset contains the information on the percentage of unemployment on related months and related years.There are  `r ncol(unemployment_df)` variables, such as`r names(unemployment_df)`. There are `r nrow(unemployment_df)` rows and `r ncol(unemployment_df)` columns.The range of years is (`r range(pull(unemployment_df, year))`)
+
+The combine_all_df dataset helps to provide the information from three previous dataset.(pols,snp,unemployment), which give us information on national politicians,stock market index and percentage of unemployment on related months and related years.There are  `r ncol(combine_all_df)` variables, such as`r names(combine_all_df)`. There are `r nrow(combine_all_df)` rows and `r ncol(combine_all_df)` columns.The range of years is (`r range(pull(combine_all_df, year))`)
 
 
 
