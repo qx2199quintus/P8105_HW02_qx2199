@@ -116,7 +116,7 @@ This dataset contains information related to each entrance and exit for each sub
 `r names(nyc_subway_df)`. There are `r nrow(nyc_subway_df)` rows and `r ncol(nyc_subway_df)` columns. There are `r nyc_subway_df %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations.
 There are `r nyc_subway_df %>% filter(ada == T) %>% select(station_name, line) %>% distinct() %>% nrow()` stations that are ADA compliant.
 The proportion of station entrances without vending allow entrance is 
-`r nrow(filter(nyc_subway_df, entry == T & vending == "NO"))/nrow(filter(nyc_subway_df, vending == "NO"))` 
+`r nrow(filter(nyc_subway_df, entry == T & vending =="NO"))/nrow(filter(nyc_subway_df, vending == "NO"))` 
 
 
 ##Reform the data so that route number and route name are distinct variables
