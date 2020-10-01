@@ -105,8 +105,7 @@ nyc_subway_df =
              ) %>% 
       janitor::clean_names() %>% 
       select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) %>% 
-   
-  mutate(entry = as.logical(ifelse(entry == "YES", 1, 0)
+      mutate(entry = as.logical(ifelse(entry == "YES", 1, 0)
   ))
      
 ```
